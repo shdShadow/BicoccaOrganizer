@@ -1,22 +1,10 @@
 package shdShadow.BicoccaOrganizer;
-
-import java.awt.BorderLayout;
-import java.awt.Desktop;
-import java.io.IOException;
-import java.net.URI;
-
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JEditorPane;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 
 import com.formdev.flatlaf.FlatDarkLaf;
+import shdShadow.BicoccaOrganizer.LoginWindow.LoginWindow;
+import shdShadow.BicoccaOrganizer.util.Shared;
 
 /**
  * Hello world!
@@ -26,7 +14,14 @@ public class App
 {
 	public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException {
 		UIManager.setLookAndFeel(new FlatDarkLaf());
-		init.showWelcomeIfNeeded();
+		System.out.println("Working dir: " + System.getProperty("user.dir"));
+System.out.println("User home: " + System.getProperty("user.home"));
+		Shared cond = new Shared();
+		//FirstWindow a = new FirstWindow("BicoccaOrganizer", 600, 360, false);
+		//a.showWindow();
+		LoginWindow l = new LoginWindow("Login to Bicocca Services", 450, 240, false, cond);
+		l.showWindow();
+		//try{l.testSelenium();}catch(Exception e){}
 	}
 }	
 	
