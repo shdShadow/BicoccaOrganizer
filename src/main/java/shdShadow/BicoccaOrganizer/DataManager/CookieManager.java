@@ -5,20 +5,24 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import javax.swing.JOptionPane;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import shdShadow.BicoccaOrganizer.Interfaces.IJsonIO;
+import shdShadow.BicoccaOrganizer.util.Constants;
 import shdShadow.BicoccaOrganizer.util.Shared;
 import shdShadow.BicoccaOrganizer.util.UserCookies;
 
-public class CookieManager {
+public class CookieManager implements IJsonIO<Void, UserCookies> {
     private Shared cond;
     
     public CookieManager(Shared condivisa){
         this.cond = condivisa;
     }
-
-    public void saveToJson(){
+    @Override
+    public Void saveToJson(UserCookies cookies) throws IOException{
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         String fullpath = cond.getBaseDataPath();
         File cookieDirectory = new File(fullpath);
@@ -26,20 +30,26 @@ public class CookieManager {
             cookieDirectory.canWrite();
             cookieDirectory.mkdirs();
         }
-        try(FileWriter writer = new FileWriter(fullpath + "cookies.json")){
+        FileWriter writer = new FileWriter(fullpath + Constants.COOKIES_FILE);
             gson.toJson(cond.getCookie(), writer);
-        }catch (IOException e){
-            System.out.println(e.getMessage());
+            //if i cant write the file, then something is wrong
+            //i dont have permits
+            //there's no more space available
+            //i dont know ...
+            //show the error window and close the application
+            JOptionPane.showMessageDialog(null, "An error has occurred while writing a file", "An error has occurred!", -1);
             System.exit(-1);
+        return null;
         }
-    }
-
-    public void readCookiesFromJson(){
+    
+    @Override
+    public UserCookies loadFromJson(){
         Gson gson = new Gson();
-        try (FileReader reader = new FileReader(cond.getBaseDataPath() + "cookies.json")){
-            cond.setCookie(gson.fromJson(reader, UserCookies.class));
+        try (FileReader reader = new FileReader(cond.getBaseDataPath() + Constants.COOKIES_FILE)){
+            return gson.fromJson(reader, UserCookies.class);
         }catch (IOException ex){
-            cond.setCookie(null);
+            System.out.println(ex.getMessage());
+            return null;
         }
     }
     

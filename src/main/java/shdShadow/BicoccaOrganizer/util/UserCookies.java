@@ -51,7 +51,7 @@ public class UserCookies {
         System.out.println(json);
     }
 
-    private Map<String, String> buildCookieMap(UserCookies cookies) {
+    public static Map<String, String> buildCookieMap(UserCookies cookies) {
         Map<String, String> cookieMap = new HashMap<>();
 
         if (cookies.getElearningSamlSessionID() != null) {

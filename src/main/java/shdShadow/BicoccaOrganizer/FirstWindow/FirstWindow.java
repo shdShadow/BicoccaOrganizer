@@ -24,13 +24,14 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 
 import shdShadow.BicoccaOrganizer.DialogWindowTemplate;
+import shdShadow.BicoccaOrganizer.util.Shared;
 
 public class FirstWindow  extends DialogWindowTemplate {
     private static final String PREF_NODE = "shdShadow.BicoccaOrganizer";
     private static final String SHOW_KEY = "showWelcome";
     private static final Preferences prefs = Preferences.userRoot().node(PREF_NODE);
-    public FirstWindow(String title, int width, int hegiht, boolean isResizable) {
-        super(title, width, hegiht, isResizable);
+    public FirstWindow(String title, int width, int hegiht, boolean isResizable, Shared cond) {
+        super(title, width, hegiht, isResizable, cond);
     }
     @Override
     public void closeWindow(){

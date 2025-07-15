@@ -4,18 +4,25 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.io.IOException;
+
 import org.openqa.selenium.TimeoutException;
+
+import shdShadow.BicoccaOrganizer.CookieErrorWindow;
 import shdShadow.BicoccaOrganizer.DialogWindowTemplate;
 import shdShadow.BicoccaOrganizer.DataManager.CookieManager;
+import shdShadow.BicoccaOrganizer.util.Constants;
 import shdShadow.BicoccaOrganizer.util.Requests;
 import shdShadow.BicoccaOrganizer.util.Shared;
 
@@ -23,11 +30,10 @@ public class LoginWindow extends DialogWindowTemplate {
     private JTextField usernameField;
     private JPasswordField passwordField;
     private JLabel statusLabel;
-    private Shared condivisa;
     private CookieManager cookieManager;
+
     public LoginWindow(String title, int width, int height, boolean isResizable, Shared cond) {
-        super(title, width, height, isResizable);
-        this.condivisa = cond;
+        super(title, width, height, isResizable, cond);
         this.cookieManager = new CookieManager(cond);
     }
 
@@ -38,8 +44,8 @@ public class LoginWindow extends DialogWindowTemplate {
 
     @Override
     public void showWindow() {
-        cookieManager.readCookiesFromJson();
-        if (condivisa.getCookie() == null || !Requests.areCookiesValid(condivisa.getCookie())){
+        condivisa.setCookie(cookieManager.loadFromJson());
+        if (condivisa.getCookie() == null || !Requests.areCookiesValid(condivisa.getCookie())) {
             JPanel header = createHeaderPanel();
             JPanel middle = createMiddlePanel();
             JPanel bottom = createBottomPanel();
@@ -50,13 +56,15 @@ public class LoginWindow extends DialogWindowTemplate {
             mainPanel.add(bottom, BorderLayout.SOUTH);
             super.getContentPane().add(mainPanel);
             this.setVisible(true);
-        }else{
+        } else {
             System.out.println("Cookies saved!");
-            try{Requests.areCookiesValid(condivisa.getCookie());}catch(Exception e){
+            try {
+                Requests.areCookiesValid(condivisa.getCookie());
+            } catch (Exception e) {
 
             }
         }
-        
+
     }
 
     private JPanel createHeaderPanel() {
@@ -105,27 +113,42 @@ public class LoginWindow extends DialogWindowTemplate {
         statusLabel = new JLabel(" ");
         loginButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        statusLabel.setBorder(new EmptyBorder(5, 0, 0, 0));
+        statusLabel.setBorder(new EmptyBorder(0, 0, 10, 0));
         bottom.add(statusLabel);
         loginButton.addActionListener(e -> {
-            String username = usernameField.getText();
-            String password = new String(passwordField.getPassword());
-            try {
-                condivisa.setCookie(Requests.loginToServices(username, password));
-                CookieManager c = new CookieManager(condivisa);
-                c.saveToJson();
-                statusLabel.setForeground(Color.GREEN);
-                statusLabel.setText("Logged in! This window will close shortly...");
-            } catch (TimeoutException ex) {
-                statusLabel.setForeground(Color.RED);
-                statusLabel.setText("Timed out! Check network or page structure.");
-                System.err.println(ex.getMessage());
-            } catch (Exception ex) {
-                statusLabel.setForeground(Color.RED);
-                statusLabel.setText("Unexpected error occurred!");
-                ex.printStackTrace();
-            }
+            statusLabel.setText("Logging you in...");
+            SwingUtilities.invokeLater(() -> {
+                String username = usernameField.getText();
+                String password = new String(passwordField.getPassword());
+                try {
+                    condivisa.setCookie(Requests.loginToServices(username, password));
+                    CookieManager c = new CookieManager(condivisa);
+                    statusLabel.setForeground(Color.GREEN);
+                    statusLabel.setText("Logged in! This window will close shortly...");
+                    c.saveToJson(condivisa.getCookie());
+                    closeWindow();
+                } catch (TimeoutException ex) {
+                    statusLabel.setForeground(Color.RED);
+                    statusLabel.setText("Timed out! Check your network or your credentials!");
+                    System.err.println(ex.getMessage());
+                } catch (IOException ex) {
+                    String fullPath = condivisa.getBaseDataPath() + Constants.COOKIES_FILE;
+                    String message = "An error was encountered while trying to write to the cookies file.\n"
+                            + "Full path: " + fullPath + "\n\n"
+                            + "• Please check this directory's user permissions.\n"
+                            + "• Ensure that you have enough disk space.\n\n"
+                            + "If you believe this error is not your fault,\n"
+                            + "feel free to open a pull request at:\n"
+                            + "https://github.com/your-repo-url\n"
+                            + "or write me an email: your.email@example.com";
 
+                    //CookieErrorWindow.show(, condivisa.getBaseDataPath() + Constants.COOKIES_FILE);
+                } catch (Exception ex) {
+                    statusLabel.setForeground(Color.RED);
+                    statusLabel.setText("Unexpected error occurred!");
+                    ex.printStackTrace();
+                }
+            });
         });
         bottom.add(loginButton);
 

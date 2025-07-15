@@ -1,4 +1,4 @@
-package shdShadow.BicoccaOrganizer;
+package shdShadow.BicoccaOrganizer.Interfaces;
 
 public interface IWindowTemplate {
     public void showWindow();

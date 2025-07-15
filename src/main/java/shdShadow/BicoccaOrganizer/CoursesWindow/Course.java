@@ -1,6 +1,7 @@
 package shdShadow.BicoccaOrganizer.CoursesWindow;
 
 public class Course {
+    //this is going to be a SHA?
     private String name;
     private String url;
     private Boolean examPassed;

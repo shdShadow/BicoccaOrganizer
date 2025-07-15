@@ -15,14 +15,12 @@ import shdShadow.BicoccaOrganizer.CoursesWindow.Course;
 
 public class mainScrape {
     private Map<String, String> Cookies;
-    private List<AcademicYear> years;
     public mainScrape(Map<String, String> Cookies) {
         this.Cookies = Cookies;
-        this.years = new ArrayList<AcademicYear>();
     }
 
-    public void scrapeCourses(String url) {
-
+    public List<AcademicYear> scrapeCourses(String url) {
+        List<AcademicYear> years = new ArrayList<AcademicYear>();
         try {
             //Create the connection
             Connection.Response response = Jsoup.connect(url)
@@ -64,15 +62,10 @@ public class mainScrape {
                 
             }
         } catch (Exception e) {
+            //TODO: Handle the exception properly
             System.out.println(e.getMessage());
             e.printStackTrace();
         }
-    }
-
-  
-    private void debugYears(){
-        for(AcademicYear y : years){
-            System.out.println(y.getName());
-        }
+        return years;
     }
 }
