@@ -24,6 +24,9 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 
 import shdShadow.BicoccaOrganizer.DialogWindowTemplate;
+import shdShadow.BicoccaOrganizer.Status;
+import shdShadow.BicoccaOrganizer.Status.ApplicationStatus;
+import shdShadow.BicoccaOrganizer.util.General;
 import shdShadow.BicoccaOrganizer.util.Shared;
 
 public class FirstWindow  extends DialogWindowTemplate {
@@ -45,6 +48,7 @@ public class FirstWindow  extends DialogWindowTemplate {
                 .node("shdShadow.BicoccaOrganizer")
                 .remove("showWelcome");
         //modifies system users preferences so that it knows when this windows has already been shown
+        condivisa.changeStatus(ApplicationStatus.LOGIN);
         if (prefs.getBoolean(SHOW_KEY, true)) {
             buildWelcomeFrame();
             super.setVisible(true);
@@ -79,7 +83,7 @@ public class FirstWindow  extends DialogWindowTemplate {
         pane.setEditable(false);
         pane.setOpaque(false);
         //pane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        pane.addHyperlinkListener(linkListener(this));
+        General.addHyperlinkListener(pane);
         return pane;
     }
 
@@ -104,7 +108,7 @@ public class FirstWindow  extends DialogWindowTemplate {
         versionPane.setEditable(false);
         versionPane.setOpaque(false);
         versionPane.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 10));
-        versionPane.addHyperlinkListener(linkListener(this));
+        General.addHyperlinkListener(versionPane);
         middle.add(versionPane, BorderLayout.CENTER);
 
         return middle;
@@ -131,20 +135,6 @@ public class FirstWindow  extends DialogWindowTemplate {
         bottom.add(madeWithLove, BorderLayout.WEST);
         bottom.add(right, BorderLayout.EAST);
         return bottom;
-    }
-
-    private HyperlinkListener linkListener(Window frame) {
-        return new HyperlinkListener() {
-            public void hyperlinkUpdate(HyperlinkEvent e) {
-                if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                    try {
-                        Desktop.getDesktop().browse(URI.create(e.getURL().toString()));
-                    } catch (IOException ex) {
-                        JOptionPane.showMessageDialog(frame, "Could not open link.");
-                    }
-                }
-            }
-        };
     }
 
     private static void closeAndPersist(Window parent, boolean hideForever) {

@@ -54,5 +54,52 @@
   <artifactId>gson</artifactId>
   <version>2.10.1</version>
 </dependency>
+    <dependency>
+        <groupId>com.formdev</groupId>
+        <artifactId>flatlaf</artifactId>
+        <version>3.4</version> <!-- or latest -->
+    </dependency>
+
+    <!-- FlatLaf Extras (for FlatSVGIcon) -->
+    <dependency>
+        <groupId>com.formdev</groupId>
+        <artifactId>flatlaf-extras</artifactId>
+        <version>3.4</version> <!-- match version with flatlaf -->
+    </dependency>
   </dependencies>
+  <build>
+    <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <version>3.3.0</version> <!-- or latest -->
+            <configuration>
+                <archive>
+                    <manifest>
+                        <mainClass>shdShadow.BicoccaOrganizer.App</mainClass>
+                    </manifest>
+                </archive>
+            </configuration>
+        </plugin>
+        <plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-shade-plugin</artifactId>
+    <version>3.5.0</version>
+    <executions>
+        <execution>
+            <phase>package</phase>
+            <goals><goal>shade</goal></goals>
+            <configuration>
+                <transformers>
+                    <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                        <mainClass>shdShadow.BicoccaOrganizer.App</mainClass>
+                    </transformer>
+                </transformers>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+    </plugins>
+</build>
+
 </project>

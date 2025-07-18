@@ -15,13 +15,15 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Frame;
 import java.io.IOException;
 
 import org.openqa.selenium.TimeoutException;
 
-import shdShadow.BicoccaOrganizer.CookieErrorWindow;
 import shdShadow.BicoccaOrganizer.DialogWindowTemplate;
+import shdShadow.BicoccaOrganizer.Status.ApplicationStatus;
 import shdShadow.BicoccaOrganizer.DataManager.CookieManager;
+import shdShadow.BicoccaOrganizer.ErrorWindows.CookieErrorWindow;
 import shdShadow.BicoccaOrganizer.util.Constants;
 import shdShadow.BicoccaOrganizer.util.Requests;
 import shdShadow.BicoccaOrganizer.util.Shared;
@@ -55,6 +57,7 @@ public class LoginWindow extends DialogWindowTemplate {
             mainPanel.add(middle, BorderLayout.CENTER);
             mainPanel.add(bottom, BorderLayout.SOUTH);
             super.getContentPane().add(mainPanel);
+            condivisa.changeStatus(ApplicationStatus.COURSES_WINDOW);
             this.setVisible(true);
         } else {
             System.out.println("Cookies saved!");
@@ -63,7 +66,9 @@ public class LoginWindow extends DialogWindowTemplate {
             } catch (Exception e) {
 
             }
+            condivisa.changeStatus(ApplicationStatus.COURSES_WINDOW);
         }
+        
 
     }
 
@@ -132,18 +137,11 @@ public class LoginWindow extends DialogWindowTemplate {
                     statusLabel.setText("Timed out! Check your network or your credentials!");
                     System.err.println(ex.getMessage());
                 } catch (IOException ex) {
+                    condivisa.status = ApplicationStatus.CRASHED;
                     String fullPath = condivisa.getBaseDataPath() + Constants.COOKIES_FILE;
-                    String message = "An error was encountered while trying to write to the cookies file.\n"
-                            + "Full path: " + fullPath + "\n\n"
-                            + "• Please check this directory's user permissions.\n"
-                            + "• Ensure that you have enough disk space.\n\n"
-                            + "If you believe this error is not your fault,\n"
-                            + "feel free to open a pull request at:\n"
-                            + "https://github.com/your-repo-url\n"
-                            + "or write me an email: your.email@example.com";
-
-                    //CookieErrorWindow.show(, condivisa.getBaseDataPath() + Constants.COOKIES_FILE);
+                    CookieErrorWindow.show(this, fullPath);
                 } catch (Exception ex) {
+                    condivisa.setCrashed(true);
                     statusLabel.setForeground(Color.RED);
                     statusLabel.setText("Unexpected error occurred!");
                     ex.printStackTrace();

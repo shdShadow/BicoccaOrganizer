@@ -1,8 +1,9 @@
-package shdShadow.BicoccaOrganizer;
+package shdShadow.BicoccaOrganizer.ErrorWindows;
 
 import java.awt.BorderLayout;
 import java.awt.Desktop;
 import java.awt.Frame;
+import java.awt.Window;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -15,10 +16,12 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
+import shdShadow.BicoccaOrganizer.util.General;
+
 public class CookieErrorWindow extends JDialog {
 
-    public CookieErrorWindow(Frame parent, String fullPath) {
-        super(parent, "Cookie Save Error", true);
+    public CookieErrorWindow(Window parent, String fullPath) {
+        super(parent, "Cookie Save Error", ModalityType.APPLICATION_MODAL);
         setSize(550, 300);
         setLocationRelativeTo(parent);
         setResizable(false);
@@ -33,8 +36,8 @@ public class CookieErrorWindow extends JDialog {
                 + "</ul>"
                 + "<p>If you believe this error is not your fault, you can:</p>"
                 + "<ul>"
-                + "<li><a href='https://github.com/your-repo-url'>Open a pull request on GitHub</a></li>"
-                + "<li><a href='mailto:your.email@example.com'>Write me an email</a></li>"
+                + "<li><a href='https://github.com/shdShadow/BicoccaOrganizer'>Open a pull request on GitHub</a></li>"
+                + "<li><a href='mailto:s.ballerini6@campus.unimib.it'>Write me an email</a></li>"
                 + "</ul>"
                 + "</body></html>";
 
@@ -43,18 +46,7 @@ public class CookieErrorWindow extends JDialog {
         editorPane.setOpaque(false);
 
         // Enable hyperlink clicks
-        editorPane.addHyperlinkListener(e -> {
-            if (e.getEventType() == javax.swing.event.HyperlinkEvent.EventType.ACTIVATED) {
-                try {
-                    Desktop.getDesktop().browse(new URI(e.getURL().toString()));
-                } catch (IOException | URISyntaxException ex) {
-                    JOptionPane.showMessageDialog(this,
-                            "Failed to open link: " + e.getURL(),
-                            "Link Error",
-                            JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        });
+        General.addHyperlinkListener(editorPane);
 
         JScrollPane scrollPane = new JScrollPane(editorPane);
         scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -66,8 +58,9 @@ public class CookieErrorWindow extends JDialog {
 
         add(scrollPane, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
+        parent.dispose();
     }
-      public static void show(Frame parent, String fullPath) {
+      public static void show(Window parent, String fullPath) {
         CookieErrorWindow dialog = new CookieErrorWindow(parent, fullPath);
         dialog.setVisible(true);
     }

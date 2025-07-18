@@ -32,13 +32,12 @@ public class CookieManager implements IJsonIO<Void, UserCookies> {
         }
         FileWriter writer = new FileWriter(fullpath + Constants.COOKIES_FILE);
             gson.toJson(cond.getCookie(), writer);
-            //if i cant write the file, then something is wrong
+            //if i cant write the file, then something is wrong, i propagate the exception to the caller
             //i dont have permits
             //there's no more space available
             //i dont know ...
             //show the error window and close the application
-            JOptionPane.showMessageDialog(null, "An error has occurred while writing a file", "An error has occurred!", -1);
-            System.exit(-1);
+            writer.close();
         return null;
         }
     

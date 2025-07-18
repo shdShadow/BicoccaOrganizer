@@ -12,6 +12,8 @@ import org.jsoup.select.Elements;
 
 import shdShadow.BicoccaOrganizer.CoursesWindow.AcademicYear;
 import shdShadow.BicoccaOrganizer.CoursesWindow.Course;
+import shdShadow.BicoccaOrganizer.ErrorWindows.CookieErrorWindow;
+import shdShadow.BicoccaOrganizer.Exceptions.CookiesInvalidExcpetion;
 
 public class mainScrape {
     private Map<String, String> Cookies;
@@ -19,7 +21,7 @@ public class mainScrape {
         this.Cookies = Cookies;
     }
 
-    public List<AcademicYear> scrapeCourses(String url) {
+    public List<AcademicYear> scrapeCourses(String url) throws CookiesInvalidExcpetion{
         List<AcademicYear> years = new ArrayList<AcademicYear>();
         try {
             //Create the connection
@@ -33,6 +35,9 @@ public class mainScrape {
                     .followRedirects(true)
                     .method(Connection.Method.GET)
                     .execute();
+            if (!response.url().toString().equals(url)){
+                throw new CookiesInvalidExcpetion("Invalid cookies");
+            }
             //Get the html document
             Document doc = response.parse();
             Elements acadamicYearsName = doc.select("h5");
