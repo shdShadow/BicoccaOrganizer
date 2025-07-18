@@ -10,8 +10,6 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JToggleButton;
-import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -30,7 +28,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import shdShadow.BicoccaOrganizer.WindowTemplate;
 import shdShadow.BicoccaOrganizer.DataManager.AcademicYearsManager;
@@ -46,7 +43,11 @@ public class CoursesWindow extends WindowTemplate {
     private List<AcademicYear> years;
     private AcademicYearsManager ym;
     private Map<Course, JLabel> courseLabels = new HashMap<Course, JLabel>();
-    
+    private Map<Course, JPanel> courseRows = new HashMap<Course, JPanel>();
+    private Map<AcademicYear, JPanel> yearHeaders = new HashMap<AcademicYear, JPanel>();
+    private JPanel mainPanel;
+    private JComboBox<String> filterComboBox;
+
     public CoursesWindow(String title, int width, int height, boolean isResizable, Shared condivisa) {
         super(title, width, height, true, condivisa);
         years = new ArrayList<AcademicYear>();
@@ -57,10 +58,10 @@ public class CoursesWindow extends WindowTemplate {
     public void showWindow() {
         scraper = new mainScrape(UserCookies.buildCookieMap(condivisa.getCookie()));
         years = ym.loadFromJson();
-        if(years == null || years.isEmpty()) {
-            try{
-                years = scraper.scrapeCourses(Constants.COURSES_URL);   
-            }catch (CookiesInvalidExcpetion ex){
+        if (years == null || years.isEmpty()) {
+            try {
+                years = scraper.scrapeCourses(Constants.COURSES_URL);
+            } catch (CookiesInvalidExcpetion ex) {
                 JOptionPane.showMessageDialog(this,
                         "Session cookies are no longer valid. Please log in again.",
                         "Error",
@@ -71,11 +72,76 @@ public class CoursesWindow extends WindowTemplate {
                 ScrapingErrorWindow.show(this, Constants.COURSES_URL);
                 return;
             }
-            
-            //TODO: handle case where scraping fails
+
+            // TODO: handle case where scraping fails
         }
-        JPanel mainPanel = createMainPanel();
-        mainPanel.revalidate();
+
+        // Create the main content panel
+        mainPanel = createMainPanel();
+
+        // Create and add the filter panel
+        JPanel filterPanel = createFilterPanel();
+
+        // Create a container panel to hold both filter and main panels
+        JPanel containerPanel = new JPanel(new BorderLayout());
+        containerPanel.setBackground(Color.decode("#1e1e1e"));
+        containerPanel.add(filterPanel, BorderLayout.NORTH);
+        containerPanel.add(mainPanel, BorderLayout.CENTER);
+
+        populateCoursesPanel();
+
+        addScrollPaneToWindow(containerPanel);
+        this.setVisible(true);
+    }
+
+    private JPanel createMainPanel() {
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        mainPanel.setBackground(Color.decode("#1e1e1e"));
+        return mainPanel;
+    }
+
+    private JPanel createFilterPanel() {
+        JPanel filterPanel = new JPanel(new BorderLayout());
+        filterPanel.setBackground(Color.decode("#2d2d30"));
+        filterPanel.setBorder(new EmptyBorder(10, 15, 10, 15));
+
+        JLabel filterLabel = new JLabel("Filter courses: ");
+        filterLabel.setForeground(Color.WHITE);
+        filterLabel.setFont(new Font("SansSerif", Font.PLAIN, 14));
+
+        filterComboBox = new JComboBox<>();
+        filterComboBox.addItem("All courses");
+        filterComboBox.addItem("Passed");
+        filterComboBox.addItem("Studying");
+        filterComboBox.addItem("Not passed");
+        filterComboBox.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        filterComboBox.setBackground(Color.decode("#3c3c3c"));
+        filterComboBox.setForeground(Color.WHITE);
+        filterComboBox.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        filterComboBox.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        filterComboBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                applyFilter();
+            }
+        });
+
+        JPanel filterContainer = new JPanel();
+        filterContainer.setLayout(new BoxLayout(filterContainer, BoxLayout.X_AXIS));
+        filterContainer.setOpaque(false);
+        filterContainer.add(filterLabel);
+        filterContainer.add(Box.createHorizontalStrut(10));
+        filterContainer.add(filterComboBox);
+
+        filterPanel.add(filterContainer, BorderLayout.WEST);
+        return filterPanel;
+    }
+
+    private void populateCoursesPanel() {
+        mainPanel.removeAll();
+
         for (AcademicYear year : years) {
             JPanel headerPanel = createHeaderPanel(year);
             JPanel coursePanel = createCoursePanel(year);
@@ -85,15 +151,62 @@ public class CoursesWindow extends WindowTemplate {
             mainPanel.add(coursePanel);
         }
 
-        addScrollPaneToWindow(mainPanel);
-        this.setVisible(true);
+        mainPanel.revalidate();
+        mainPanel.repaint();
     }
 
-    private JPanel createMainPanel() {
-        JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-        mainPanel.setBackground(Color.decode("#1e1e1e"));
-        return mainPanel;
+    private void applyFilter() {
+        String selectedFilter = (String) filterComboBox.getSelectedItem();
+        Course.ExamStatus filterStatus = null;
+
+        switch (selectedFilter) {
+            case "Passed":
+                filterStatus = Course.ExamStatus.PASSED;
+                break;
+            case "Studying":
+                filterStatus = Course.ExamStatus.STUDYING;
+                break;
+            case "Not passed":
+                filterStatus = Course.ExamStatus.NOT_PASSED;
+                break;
+            case "All courses":
+            default:
+                filterStatus = null; // Show all courses
+                break;
+        }
+
+        // Apply filter to all course rows
+        for (Map.Entry<Course, JPanel> entry : courseRows.entrySet()) {
+            Course course = entry.getKey();
+            JPanel courseRow = entry.getValue();
+
+            if (filterStatus == null || course.getExamStatus() == filterStatus) {
+                courseRow.setVisible(true);
+            } else {
+                courseRow.setVisible(false);
+            }
+        }
+
+        // Hide year headers if no courses are visible in that year
+        for (AcademicYear year : years) {
+            boolean hasVisibleCourses = false;
+            for (Course course : year.getCourses()) {
+                JPanel courseRow = courseRows.get(course);
+                if (courseRow != null && courseRow.isVisible()) {
+                    hasVisibleCourses = true;
+                    break;
+                }
+            }
+
+            // Find the header panel for this year and hide/show it
+            JPanel headerPanel = yearHeaders.get(year);
+            if (headerPanel != null) {
+                headerPanel.setVisible(hasVisibleCourses);
+            }
+        }
+
+        mainPanel.revalidate();
+        mainPanel.repaint();
     }
 
     private JPanel createHeaderPanel(AcademicYear year) {
@@ -108,6 +221,7 @@ public class CoursesWindow extends WindowTemplate {
         headerLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         headerPanel.add(headerLabel, BorderLayout.WEST);
+        yearHeaders.put(year, headerPanel);
         return headerPanel;
     }
 
@@ -118,128 +232,15 @@ public class CoursesWindow extends WindowTemplate {
         coursePanel.setVisible(false); // collapsed initially
 
         for (Course course : year.getCourses()) {
-            JPanel courseRow = createCourseRow(course);
+            JPanel courseRow = RowBuilder.createCourseRow(course, courseLabels, () -> reload(),
+                    () -> ym.saveToJson(years));
+            courseRows.put(course, courseRow);
             coursePanel.add(courseRow);
         }
 
         return coursePanel;
     }
 
-    private JPanel createCourseRow(Course course) {
-        JPanel courseRow = new JPanel(new BorderLayout());
-        courseRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
-        courseRow.setBackground(getCorrectBackgroundColor(course));
-        courseRow.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(60, 60, 60)),
-                new EmptyBorder(10, 20, 10, 10)));
-
-        JLabel courseLabel = new JLabel(getCorrectCourseName(course, null));
-        courseLabel.setForeground(Color.decode("#dddddd"));
-        courseLabel.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        courseLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        courseLabels.put(course, courseLabel);
-
-        JButton renameButton = createRenameButton(course);
-
-        JComboBox examStatusList = createComboBoxStatus(course);
-        courseRow.add(courseLabel, BorderLayout.WEST);
-        JPanel optionsPanel = new JPanel();
-        optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.X_AXIS));
-        optionsPanel.setOpaque(false);
-        optionsPanel.add(renameButton);
-        optionsPanel.add(Box.createHorizontalStrut(10)); // spacing
-        optionsPanel.add(examStatusList);
-        courseRow.add(optionsPanel, BorderLayout.EAST);
-        addCourseRowBehavior(courseRow, course);
-
-        return courseRow;
-    }
-
-    private JComboBox createComboBoxStatus(Course c){
-        JComboBox<String> examStatusList = new JComboBox<>();
-        examStatusList.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        //examStatusList.setBackground(Color.decode("#1e1e1e"));
-        examStatusList.setForeground(Color.WHITE);
-        examStatusList.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        examStatusList.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-        for (Course.ExamStatus status : Course.ExamStatus.values()) {
-            examStatusList.addItem(status.name());
-        }
-
-        examStatusList.setSelectedItem(c.getExamStatus().name());
-
-        examStatusList.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String selectedItem = (String) examStatusList.getSelectedItem();
-                c.setExamStatus(Course.ExamStatus.valueOf(selectedItem));
-                reload();
-                ym.saveToJson(years);
-            }
-        });
-
-        return examStatusList;
-    }
-    private JButton createRenameButton(Course course) {
-        ImageIcon renameIcon = new ImageIcon(
-                CoursesWindow.class.getResource("/shdShadow/BicoccaOrganizer/resources/modify.png"));
-        Image img = renameIcon.getImage().getScaledInstance(18, 18, Image.SCALE_SMOOTH);
-        renameIcon = new ImageIcon(img);
-
-        JButton button = new JButton(renameIcon);
-        button.setToolTipText("Rename Course");
-
-        button.addActionListener(e -> {
-            String newName = JOptionPane.showInputDialog("Enter new name for the course: (keep it blank if you want to restore the original name)", getCorrectCourseName(course, null));
-            if (newName != null && !newName.trim().isEmpty()) {
-                course.setCustomName(newName);
-                reload();
-                ym.saveToJson(years);
-            }else{
-                course.setCustomName("");
-                reload();
-                ym.saveToJson(years);
-            }
-        });
-
-        return button;
-    }
-
-    private void addCourseRowBehavior(JPanel courseRow, Course course) {
-        courseRow.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                try {
-                    Desktop.getDesktop().browse(new URI(course.getUrl()));
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                courseRow.setBackground(new Color(45, 45, 45));
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                courseRow.setBackground(getCorrectBackgroundColor(course));
-            }
-        });
-    }
-    private Color getCorrectBackgroundColor(Course course){
-        switch (course.getExamStatus()) {
-            case PASSED:
-                return Constants.BGCOLOR_EXAM_PASSED;
-            case NOT_PASSED:
-                return Constants.BGCOLOR_EXAM_NOT_PASSED;
-            case STUDYING:
-                return Constants.BGCOLOR_EXAM_STUDYING;
-            default:
-                return new Color(30, 30, 30);
-        }
-    }
     private void addHeaderToggleBehavior(JPanel headerPanel, JPanel coursePanel) {
         Component[] components = headerPanel.getComponents();
         for (Component comp : components) {
@@ -261,21 +262,23 @@ public class CoursesWindow extends WindowTemplate {
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         getContentPane().add(scrollPane);
     }
-    private String getCorrectCourseName(Course c, String filter){
-        if (c.getCustomName() != null && !c.getCustomName().isBlank()){
-            return c.getCustomName();
-        }else{
-            return c.getName();
+
+    private void reload() {
+        for (Course course : courseLabels.keySet()) {
+            JLabel label = courseLabels.get(course);
+            JPanel row = courseRows.get(course);
+
+            label.setText(course.getCorrectCourseName(null));
+            row.setBackground(course.getCorrectBackgroundColor());
         }
-    }
-    private void reload(){
-        for (Map.Entry<Course, JLabel> entry : courseLabels.entrySet()) {
-            Course course = entry.getKey();
-            JLabel label = entry.getValue();
-            label.setText(getCorrectCourseName(course, null));
+
+        // Reapply the current filter after reload
+        if (filterComboBox != null) {
+            applyFilter();
         }
-        
+
     }
+
     @Override
     public void closeWindow() {
 

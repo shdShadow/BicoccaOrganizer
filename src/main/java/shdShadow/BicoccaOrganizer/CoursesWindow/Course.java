@@ -1,7 +1,11 @@
 package shdShadow.BicoccaOrganizer.CoursesWindow;
 
+import java.awt.Color;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+
+
+import shdShadow.BicoccaOrganizer.util.Constants;
 
 public class Course {
     public enum ExamStatus{
@@ -43,5 +47,24 @@ public class Course {
         this.url = url;
         this.examStatus = ExamStatus.NOT_DEFINED;
         this.customName = "";
+    }
+    public Color getCorrectBackgroundColor() {
+        switch (this.examStatus) {
+            case PASSED:
+                return Constants.BGCOLOR_EXAM_PASSED;
+            case NOT_PASSED:
+                return Constants.BGCOLOR_EXAM_NOT_PASSED;
+            case STUDYING:
+                return Constants.BGCOLOR_EXAM_STUDYING;
+            default:
+                return new Color(30, 30, 30);
+        }
+    }
+    public String getCorrectCourseName(String filter) {
+        if (this.customName != null && !this.customName.isBlank()) {
+            return this.customName;
+        } else {
+            return this.name;
+        }
     }
 }
